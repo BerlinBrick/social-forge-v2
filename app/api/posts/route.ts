@@ -7,36 +7,62 @@ const supabase = createClient(
 );
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
+    if (error) {
+      console.error(error);
+
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error(err);
+
     return NextResponse.json(
-      { error: error.message },
+      { error: "GET fehlgeschlagen" },
       { status: 500 }
     );
   }
-
-  return NextResponse.json(data);
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  const { data, error } = await supabase
-    .from("posts")
-    .insert([body])
-    .select()
-    .single();
+    console.log("POST erhalten:", body);
 
-  if (error) {
+    const { data, error } = await supabase
+      .from("posts")
+      .insert(body)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase Fehler:", error);
+
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+
+    console.log("Gespeichert:", data);
+
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error("POST Fehler:", err);
+
     return NextResponse.json(
-      { error: error.message },
+      { error: "POST fehlgeschlagen" },
       { status: 500 }
     );
   }
-
-  return NextResponse.json(data);
 }
