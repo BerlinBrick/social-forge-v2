@@ -12,7 +12,9 @@ export default function PostEditor({ onClose }: Props) {
   const [title, setTitle] = useState("");
   const [project, setProject] = useState("BerlinBrick");
   const [platform, setPlatform] = useState("Instagram");
+  const [status, setStatus] = useState("Entwurf");
   const [content, setContent] = useState("");
+  const [hashtags, setHashtags] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
@@ -101,14 +103,43 @@ export default function PostEditor({ onClose }: Props) {
 
             <div>
               <label className="mb-2 block text-slate-400">
+                Status
+              </label>
+
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
+              >
+                <option>Entwurf</option>
+                <option>Geplant</option>
+                <option>Veröffentlicht</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-slate-400">
                 Beitrag
               </label>
 
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="h-56 w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-white"
+                className="h-44 w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-white"
                 placeholder="Schreibe hier deinen Beitrag..."
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-slate-400">
+                Hashtags
+              </label>
+
+              <textarea
+                value={hashtags}
+                onChange={(e) => setHashtags(e.target.value)}
+                className="h-24 w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-white"
+                placeholder="#lego #berlinbrick"
               />
             </div>
 
@@ -162,7 +193,7 @@ export default function PostEditor({ onClose }: Props) {
           <button
             className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white hover:bg-blue-500"
           >
-            Speichern
+            💾 Speichern
           </button>
 
         </div>
