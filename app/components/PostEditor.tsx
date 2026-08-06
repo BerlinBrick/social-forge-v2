@@ -16,6 +16,7 @@ export default function PostEditor({ onClose }: Props) {
   const [content, setContent] = useState("");
   const [hashtags, setHashtags] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -29,6 +30,45 @@ export default function PostEditor({ onClose }: Props) {
     };
 
     reader.readAsDataURL(file);
+  }
+
+  async function savePost() {
+    alert("Button funktioniert");
+
+    try {
+      setSaving(true);
+
+      const response = await fetch("/api/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          project,
+          platform,
+          status,
+          content,
+          hashtags,
+          image_url: imagePreview,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        alert(err.error ?? "Fehler beim Speichern");
+        return;
+      }
+
+      alert("Beitrag gespeichert.");
+
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Speichern fehlgeschlagen.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -155,18 +195,17 @@ export default function PostEditor({ onClose }: Props) {
               onClick={() => fileInputRef.current?.click()}
               className="flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950"
             >
-
               {imagePreview ? (
                 <img
                   src={imagePreview}
                   className="h-full w-full object-cover"
+                  alt=""
                 />
               ) : (
                 <span className="text-slate-500">
                   Bild auswählen
                 </span>
               )}
-
             </div>
 
             <input
@@ -184,6 +223,7 @@ export default function PostEditor({ onClose }: Props) {
         <div className="flex justify-end gap-4 border-t border-slate-800 p-6">
 
           <button
+            type="button"
             onClick={onClose}
             className="rounded-xl border border-slate-700 px-6 py-3 text-white"
           >
@@ -191,9 +231,12 @@ export default function PostEditor({ onClose }: Props) {
           </button>
 
           <button
-            className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white hover:bg-blue-500"
+            type="button"
+            onClick={savePost}
+            disabled={saving}
+            className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
           >
-            💾 Speichern
+            {saving ? "Speichern..." : "💾 Speichern"}
           </button>
 
         </div>
