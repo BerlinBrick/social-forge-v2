@@ -1,19 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type Props = {
   onClose: () => void;
 };
 
 export default function PostEditor({ onClose }: Props) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [title, setTitle] = useState("");
   const [project, setProject] = useState("BerlinBrick");
   const [platform, setPlatform] = useState("Instagram");
+  const [content, setContent] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const [image, setImage] = useState<string | null>(null);
-
-  function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
     if (!file) return;
@@ -21,7 +23,7 @@ export default function PostEditor({ onClose }: Props) {
     const reader = new FileReader();
 
     reader.onload = () => {
-      setImage(reader.result as string);
+      setImagePreview(reader.result as string);
     };
 
     reader.readAsDataURL(file);
@@ -29,7 +31,8 @@ export default function PostEditor({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-8">
-      <div className="w-full max-w-5xl rounded-3xl border border-slate-800 bg-slate-900">
+
+      <div className="w-full max-w-6xl rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl">
 
         <div className="flex items-center justify-between border-b border-slate-800 p-6">
 
@@ -39,7 +42,7 @@ export default function PostEditor({ onClose }: Props) {
 
           <button
             onClick={onClose}
-            className="rounded-lg border border-slate-700 px-4 py-2 text-white hover:bg-slate-800"
+            className="rounded-xl border border-slate-700 px-3 py-2 text-white hover:bg-slate-800"
           >
             ✕
           </button>
@@ -48,10 +51,9 @@ export default function PostEditor({ onClose }: Props) {
 
         <div className="grid grid-cols-2 gap-8 p-8">
 
-          <div className="space-y-6">
+          <div className="space-y-5">
 
             <div>
-
               <label className="mb-2 block text-slate-400">
                 Titel
               </label>
@@ -61,11 +63,9 @@ export default function PostEditor({ onClose }: Props) {
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
               />
-
             </div>
 
             <div>
-
               <label className="mb-2 block text-slate-400">
                 Projekt
               </label>
@@ -78,11 +78,9 @@ export default function PostEditor({ onClose }: Props) {
                 <option>BerlinBrick</option>
                 <option>Cat-2-Go</option>
               </select>
-
             </div>
 
             <div>
-
               <label className="mb-2 block text-slate-400">
                 Plattform
               </label>
@@ -99,7 +97,19 @@ export default function PostEditor({ onClose }: Props) {
                 <option>LinkedIn</option>
                 <option>YouTube</option>
               </select>
+            </div>
 
+            <div>
+              <label className="mb-2 block text-slate-400">
+                Beitrag
+              </label>
+
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="h-56 w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-white"
+                placeholder="Schreibe hier deinen Beitrag..."
+              />
             </div>
 
           </div>
@@ -110,60 +120,55 @@ export default function PostEditor({ onClose }: Props) {
               Bild
             </label>
 
-            <label className="flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950"
+            >
 
-              {image ? (
-
+              {imagePreview ? (
                 <img
-                  src={image}
-                  alt="Vorschau"
+                  src={imagePreview}
                   className="h-full w-full object-cover"
                 />
-
               ) : (
-
-                <div className="text-center text-slate-500">
-                  <div className="text-5xl mb-3">
-                    📷
-                  </div>
-
-                  <div>
-                    Bild auswählen
-                  </div>
-
-                  <div className="mt-2 text-sm">
-                    JPG, PNG oder WEBP
-                  </div>
-
-                </div>
-
+                <span className="text-slate-500">
+                  Bild auswählen
+                </span>
               )}
 
-              <input
-                hidden
-                type="file"
-                accept="image/*"
-                onChange={uploadImage}
-              />
+            </div>
 
-            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={handleImage}
+            />
 
           </div>
 
         </div>
 
-        <div className="flex justify-end border-t border-slate-800 p-6">
+        <div className="flex justify-end gap-4 border-t border-slate-800 p-6">
 
           <button
             onClick={onClose}
-            className="rounded-xl bg-blue-600 px-6 py-3 text-white hover:bg-blue-500"
+            className="rounded-xl border border-slate-700 px-6 py-3 text-white"
           >
-            Schließen
+            Abbrechen
+          </button>
+
+          <button
+            className="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white hover:bg-blue-500"
+          >
+            Speichern
           </button>
 
         </div>
 
       </div>
+
     </div>
   );
 }
