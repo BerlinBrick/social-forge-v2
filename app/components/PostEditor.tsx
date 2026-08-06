@@ -11,11 +11,28 @@ export default function PostEditor({ onClose }: Props) {
   const [project, setProject] = useState("BerlinBrick");
   const [platform, setPlatform] = useState("Instagram");
 
+  const [image, setImage] = useState<string | null>(null);
+
+  function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setImage(reader.result as string);
+    };
+
+    reader.readAsDataURL(file);
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-8">
       <div className="w-full max-w-5xl rounded-3xl border border-slate-800 bg-slate-900">
 
         <div className="flex items-center justify-between border-b border-slate-800 p-6">
+
           <h2 className="text-3xl font-bold text-white">
             Neuer Beitrag
           </h2>
@@ -26,6 +43,7 @@ export default function PostEditor({ onClose }: Props) {
           >
             ✕
           </button>
+
         </div>
 
         <div className="grid grid-cols-2 gap-8 p-8">
@@ -33,6 +51,7 @@ export default function PostEditor({ onClose }: Props) {
           <div className="space-y-6">
 
             <div>
+
               <label className="mb-2 block text-slate-400">
                 Titel
               </label>
@@ -42,9 +61,11 @@ export default function PostEditor({ onClose }: Props) {
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
               />
+
             </div>
 
             <div>
+
               <label className="mb-2 block text-slate-400">
                 Projekt
               </label>
@@ -57,9 +78,11 @@ export default function PostEditor({ onClose }: Props) {
                 <option>BerlinBrick</option>
                 <option>Cat-2-Go</option>
               </select>
+
             </div>
 
             <div>
+
               <label className="mb-2 block text-slate-400">
                 Plattform
               </label>
@@ -76,12 +99,55 @@ export default function PostEditor({ onClose }: Props) {
                 <option>LinkedIn</option>
                 <option>YouTube</option>
               </select>
+
             </div>
 
           </div>
 
-          <div className="flex aspect-square items-center justify-center rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950 text-slate-500">
-            Bild kommt im nächsten Schritt
+          <div>
+
+            <label className="mb-2 block text-slate-400">
+              Bild
+            </label>
+
+            <label className="flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950">
+
+              {image ? (
+
+                <img
+                  src={image}
+                  alt="Vorschau"
+                  className="h-full w-full object-cover"
+                />
+
+              ) : (
+
+                <div className="text-center text-slate-500">
+                  <div className="text-5xl mb-3">
+                    📷
+                  </div>
+
+                  <div>
+                    Bild auswählen
+                  </div>
+
+                  <div className="mt-2 text-sm">
+                    JPG, PNG oder WEBP
+                  </div>
+
+                </div>
+
+              )}
+
+              <input
+                hidden
+                type="file"
+                accept="image/*"
+                onChange={uploadImage}
+              />
+
+            </label>
+
           </div>
 
         </div>
