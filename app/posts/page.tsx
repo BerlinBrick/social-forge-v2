@@ -18,6 +18,7 @@ type Post = {
 export default function PostsPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function loadPosts() {
@@ -54,7 +55,10 @@ export default function PostsPage() {
           </div>
 
           <button
-            onClick={() => setEditorOpen(true)}
+            onClick={() => {
+              setSelectedPost(null);
+              setEditorOpen(true);
+            }}
             className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500"
           >
             ➕ Neuer Beitrag
@@ -90,7 +94,11 @@ export default function PostsPage() {
 
               <div
                 key={post.id}
-                className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900"
+                onClick={() => {
+                  setSelectedPost(post);
+                  setEditorOpen(true);
+                }}
+                className="cursor-pointer overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 transition hover:border-blue-500"
               >
 
                 <div className="aspect-square bg-slate-950">
@@ -137,11 +145,12 @@ export default function PostsPage() {
           </div>
 
         )}
-
-        {editorOpen && (
+                {editorOpen && (
           <PostEditor
+            post={selectedPost}
             onClose={() => {
               setEditorOpen(false);
+              setSelectedPost(null);
               loadPosts();
             }}
           />
