@@ -15,13 +15,18 @@ export default function PostEditor({ onClose }: Props) {
   const [status, setStatus] = useState("Entwurf");
   const [content, setContent] = useState("");
   const [hashtags, setHashtags] = useState("");
+
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const [saving, setSaving] = useState(false);
 
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
     if (!file) return;
+
+    setImageFile(file);
 
     const reader = new FileReader();
 
@@ -33,10 +38,32 @@ export default function PostEditor({ onClose }: Props) {
   }
 
   async function savePost() {
-    alert("Button funktioniert");
-
     try {
       setSaving(true);
+
+      let imageUrl: string | null = null;
+
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append("file", imageFile);
+
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          const err = await uploadResponse.json();
+
+          alert(err.error ?? "Bildupload fehlgeschlagen.");
+
+          return;
+        }
+
+        const uploadData = await uploadResponse.json();
+
+        imageUrl = uploadData.url;
+      }
 
       const response = await fetch("/api/posts", {
         method: "POST",
@@ -50,13 +77,15 @@ export default function PostEditor({ onClose }: Props) {
           status,
           content,
           hashtags,
-          image_url: imagePreview,
+          image_url: imageUrl,
         }),
       });
 
       if (!response.ok) {
         const err = await response.json();
-        alert(err.error ?? "Fehler beim Speichern");
+
+        alert(err.error ?? "Speichern fehlgeschlagen.");
+
         return;
       }
 
@@ -65,7 +94,8 @@ export default function PostEditor({ onClose }: Props) {
       onClose();
     } catch (err) {
       console.error(err);
-      alert("Speichern fehlgeschlagen.");
+
+      alert("Unbekannter Fehler.");
     } finally {
       setSaving(false);
     }
@@ -84,7 +114,7 @@ export default function PostEditor({ onClose }: Props) {
 
           <button
             onClick={onClose}
-            className="rounded-xl border border-slate-700 px-3 py-2 text-white hover:bg-slate-800"
+            className="rounded-xl border border-slate-700 px-4 py-2 text-white hover:bg-slate-800"
           >
             ✕
           </button>
@@ -95,93 +125,57 @@ export default function PostEditor({ onClose }: Props) {
 
           <div className="space-y-5">
 
-            <div>
-              <label className="mb-2 block text-slate-400">
-                Titel
-              </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Titel"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
+            />
 
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
-              />
-            </div>
+            <select
+              value={project}
+              onChange={(e) => setProject(e.target.value)}
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
+            >
+              <option>BerlinBrick</option>
+              <option>Cat-2-Go</option>
+            </select>
 
-            <div>
-              <label className="mb-2 block text-slate-400">
-                Projekt
-              </label>
+            <select
+              value={platform}
+              onChange={(e) => setPlatform(e.target.value)}
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
+            >
+              <option>Instagram</option>
+              <option>Facebook</option>
+              <option>Pinterest</option>
+              <option>X</option>
+              <option>LinkedIn</option>
+              <option>YouTube</option>
+            </select>
 
-              <select
-                value={project}
-                onChange={(e) => setProject(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
-              >
-                <option>BerlinBrick</option>
-                <option>Cat-2-Go</option>
-              </select>
-            </div>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
+            >
+              <option>Entwurf</option>
+              <option>Geplant</option>
+              <option>Veröffentlicht</option>
+            </select>
+                        <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Beitrag"
+              className="h-44 w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-white"
+            />
 
-            <div>
-              <label className="mb-2 block text-slate-400">
-                Plattform
-              </label>
-
-              <select
-                value={platform}
-                onChange={(e) => setPlatform(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
-              >
-                <option>Instagram</option>
-                <option>Facebook</option>
-                <option>Pinterest</option>
-                <option>X</option>
-                <option>LinkedIn</option>
-                <option>YouTube</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-slate-400">
-                Status
-              </label>
-
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
-              >
-                <option>Entwurf</option>
-                <option>Geplant</option>
-                <option>Veröffentlicht</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-slate-400">
-                Beitrag
-              </label>
-
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="h-44 w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-white"
-                placeholder="Schreibe hier deinen Beitrag..."
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-slate-400">
-                Hashtags
-              </label>
-
-              <textarea
-                value={hashtags}
-                onChange={(e) => setHashtags(e.target.value)}
-                className="h-24 w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-white"
-                placeholder="#lego #berlinbrick"
-              />
-            </div>
+            <textarea
+              value={hashtags}
+              onChange={(e) => setHashtags(e.target.value)}
+              placeholder="#hashtags"
+              className="h-24 w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-white"
+            />
 
           </div>
 
@@ -198,8 +192,8 @@ export default function PostEditor({ onClose }: Props) {
               {imagePreview ? (
                 <img
                   src={imagePreview}
-                  className="h-full w-full object-cover"
                   alt=""
+                  className="h-full w-full object-cover"
                 />
               ) : (
                 <span className="text-slate-500">
