@@ -3,6 +3,16 @@
 import { useRef, useState } from "react";
 
 type Props = {
+  post: {
+    id: string;
+    title: string;
+    project: string;
+    platform: string;
+    status: string;
+    content: string;
+    hashtags: string;
+    image_url: string | null;
+  } | null;
   onClose: () => void;
 };
 

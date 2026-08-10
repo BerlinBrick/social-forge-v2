@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       size: "1024x1024",
     });
 
-    const imageBase64 = image.data[0].b64_json ?? "";
+    const imageBase64 = image.data?.[0]?.b64_json ?? "";
 
     // In Supabase speichern
     const { data, error } = await supabase

@@ -32,10 +32,10 @@ export default function DashboardPage() {
             </h2>
 
             <div className="space-y-4">
-              <ActivityCard />
-              <ActivityCard />
-              <ActivityCard />
-              <ActivityCard />
+              <ActivityCard title="Beitrag erstellt" subtitle="Instagram · BerlinBrick" />
+              <ActivityCard title="Bild generiert" subtitle="Content Studio" />
+              <ActivityCard title="Beitrag geplant" subtitle="Facebook · Cat-2-Go" />
+              <ActivityCard title="Kampagne erstellt" subtitle="Content Studio" />
             </div>
           </div>
 

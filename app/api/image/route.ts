@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      image: image.data[0].b64_json,
+      image: image.data?.[0]?.b64_json,
     });
   } catch (error) {
     console.error(error);
