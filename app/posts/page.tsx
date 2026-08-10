@@ -136,6 +136,18 @@ export default function PostsPage() {
                     {post.content}
                   </p>
 
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setSelectedPost(post);
+                      setEditorOpen(true);
+                    }}
+                    className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                  >
+                    Bearbeiten
+                  </button>
+
                 </div>
 
               </div>

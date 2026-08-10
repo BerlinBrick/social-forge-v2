@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   post: {
@@ -16,20 +16,31 @@ type Props = {
   onClose: () => void;
 };
 
-export default function PostEditor({ onClose }: Props) {
+export default function PostEditor({ post, onClose }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [title, setTitle] = useState("");
-  const [project, setProject] = useState("BerlinBrick");
-  const [platform, setPlatform] = useState("Instagram");
-  const [status, setStatus] = useState("Entwurf");
-  const [content, setContent] = useState("");
-  const [hashtags, setHashtags] = useState("");
+  const [title, setTitle] = useState(post?.title ?? "");
+  const [project, setProject] = useState(post?.project ?? "BerlinBrick");
+  const [platform, setPlatform] = useState(post?.platform ?? "Instagram");
+  const [status, setStatus] = useState(post?.status ?? "Entwurf");
+  const [content, setContent] = useState(post?.content ?? "");
+  const [hashtags, setHashtags] = useState(post?.hashtags ?? "");
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(post?.image_url ?? null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setTitle(post?.title ?? "");
+    setProject(post?.project ?? "BerlinBrick");
+    setPlatform(post?.platform ?? "Instagram");
+    setStatus(post?.status ?? "Entwurf");
+    setContent(post?.content ?? "");
+    setHashtags(post?.hashtags ?? "");
+    setImagePreview(post?.image_url ?? null);
+    setImageFile(null);
+  }, [post]);
 
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -51,7 +62,7 @@ export default function PostEditor({ onClose }: Props) {
     try {
       setSaving(true);
 
-      let imageUrl: string | null = null;
+      let imageUrl: string | null = post?.image_url ?? null;
 
       if (imageFile) {
         const formData = new FormData();
@@ -75,8 +86,8 @@ export default function PostEditor({ onClose }: Props) {
         imageUrl = uploadData.url;
       }
 
-      const response = await fetch("/api/posts", {
-        method: "POST",
+      const response = await fetch(post ? `/api/posts/${post.id}` : "/api/posts", {
+        method: post ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -99,7 +110,7 @@ export default function PostEditor({ onClose }: Props) {
         return;
       }
 
-      alert("Beitrag gespeichert.");
+      alert(post ? "Beitrag aktualisiert." : "Beitrag gespeichert.");
 
       onClose();
     } catch (err) {
@@ -119,7 +130,7 @@ export default function PostEditor({ onClose }: Props) {
         <div className="flex items-center justify-between border-b border-slate-800 p-6">
 
           <h2 className="text-3xl font-bold text-white">
-            Neuer Beitrag
+            {post ? "Beitrag bearbeiten" : "Neuer Beitrag"}
           </h2>
 
           <button
