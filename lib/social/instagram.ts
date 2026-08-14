@@ -175,6 +175,40 @@ export async function publishInstagramImage(
     throw new Error(createMediaData.error?.message ?? "Instagram-Mediencontainer konnte nicht erstellt werden.");
   }
 
+  const maxStatusChecks = 10;
+
+  for (let attempt = 0; attempt < maxStatusChecks; attempt += 1) {
+    const statusResponse = await fetch(
+      `https://graph.instagram.com/${apiVersion}/${createMediaData.id}?fields=status_code,status`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+      }
+    );
+    const statusData = (await statusResponse.json()) as InstagramResponse & {
+      status_code?: string;
+      status?: string;
+    };
+
+    if (!statusResponse.ok) {
+      throw new Error(statusData.error?.message ?? "Instagram-Mediencontainer-Status konnte nicht abgerufen werden.");
+    }
+
+    if (statusData.status_code === "FINISHED") {
+      break;
+    }
+
+    if (statusData.status_code === "ERROR" || statusData.status_code === "EXPIRED") {
+      throw new Error("Instagram-Mediencontainer konnte nicht verarbeitet werden.");
+    }
+
+    if (attempt === maxStatusChecks - 1) {
+      throw new Error("Instagram-Mediencontainer wurde nicht rechtzeitig fertig verarbeitet.");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
   const publishResponse = await fetch(
     `https://graph.instagram.com/${apiVersion}/${accountId}/media_publish`,
     {

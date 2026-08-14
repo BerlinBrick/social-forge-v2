@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppShell from "../components/AppShell";
 import PostEditor from "../components/PostEditor";
 
@@ -20,6 +20,8 @@ export default function PostsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const [publishingPostId, setPublishingPostId] = useState<string | null>(null);
+  const publishingPostIds = useRef(new Set<string>());
 
   async function loadPosts() {
     try {
@@ -39,6 +41,11 @@ export default function PostsPage() {
   }, []);
 
   async function publishToInstagram(postId: string) {
+    if (publishingPostIds.current.has(postId)) return;
+
+    publishingPostIds.current.add(postId);
+    setPublishingPostId(postId);
+
     try {
       const response = await fetch(`/api/posts/${postId}/instagram/publish`, {
         method: "POST",
@@ -54,6 +61,9 @@ export default function PostsPage() {
     } catch (error) {
       console.error(error);
       alert("Instagram-Veröffentlichung fehlgeschlagen.");
+    } finally {
+      publishingPostIds.current.delete(postId);
+      setPublishingPostId(null);
     }
   }
 
@@ -169,13 +179,14 @@ export default function PostsPage() {
 
                   <button
                     type="button"
+                    disabled={publishingPostId === post.id}
                     onClick={(event) => {
                       event.stopPropagation();
                       publishToInstagram(post.id);
                     }}
-                    className="rounded-xl bg-pink-600 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
+                    className="rounded-xl bg-pink-600 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Auf Instagram veröffentlichen
+                    {publishingPostId === post.id ? "Wird veröffentlicht..." : "Auf Instagram veröffentlichen"}
                   </button>
 
                 </div>

@@ -6,6 +6,14 @@ import { decryptSecret } from "@/lib/social/secrets";
 
 export const runtime = "nodejs";
 
+function safeErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "Instagram publishing failed.";
+
+  return message
+    .replace(/(access_token|refresh_token|client_secret|code)=([^\s&]+)/gi, "$1=[redacted]")
+    .replace(/authorization:\s*bearer\s+[^\s]+/gi, "authorization: Bearer [redacted]");
+}
+
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -87,9 +95,10 @@ export async function POST(
 
     return NextResponse.json({ success: true, instagramPostId });
   } catch (error) {
-    console.error("Instagram Veröffentlichung Fehler:", error);
+    const message = safeErrorMessage(error);
+    console.error("Instagram Veröffentlichung Fehler:", message);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Instagram-Beitrag konnte nicht veröffentlicht werden." },
+      { error: message },
       { status: 500 }
     );
   }
