@@ -31,12 +31,11 @@ export async function updateSession(request: NextRequest) {
 
   const { data: claims } = await supabase.auth.getClaims();
 
-  const protectedPaths = ["/", "/dashboard", "/posts", "/studio"];
+  const protectedPaths = ["/", "/dashboard", "/posts", "/studio", "/settings"];
   const isProtectedPath = protectedPaths.includes(request.nextUrl.pathname);
 
   if (!claims && isProtectedPath) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    const url = new URL("/login", process.env.APP_URL!);
     url.searchParams.set("next", request.nextUrl.pathname);
 
     return NextResponse.redirect(url);

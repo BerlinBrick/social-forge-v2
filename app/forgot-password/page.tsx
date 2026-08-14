@@ -2,37 +2,32 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
-  const router = useRouter();
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    console.log("LOGIN SUBMIT START");
     event.preventDefault();
-    setLoading(true);
     setError(null);
+    setLoading(true);
 
     const supabase = createClient();
-    console.log("CALLING SUPABASE LOGIN");
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
     });
-    console.log("SUPABASE LOGIN FINISHED");
 
-    if (signInError) {
-      setError(signInError.message);
-      setLoading(false);
+    setLoading(false);
+
+    if (resetError) {
+      setError(resetError.message);
       return;
     }
 
-    window.location.assign("/dashboard");
+    setSent(true);
   }
 
   return (
@@ -42,8 +37,10 @@ export default function LoginPage() {
         className="w-full max-w-md space-y-6 rounded-2xl border border-slate-800 bg-slate-900 p-8"
       >
         <div>
-          <h1 className="text-3xl font-bold text-white">Social Forge</h1>
-          <p className="mt-2 text-slate-400">Melde dich an, um fortzufahren.</p>
+          <h1 className="text-3xl font-bold text-white">Passwort zurücksetzen</h1>
+          <p className="mt-2 text-slate-400">
+            Wir senden dir einen Link zum Festlegen eines neuen Passworts.
+          </p>
         </div>
 
         <input
@@ -55,30 +52,26 @@ export default function LoginPage() {
           className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
         />
 
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Passwort"
-          required
-          className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
-        />
-
         {error && <p className="text-sm text-red-400">{error}</p>}
+        {sent && (
+          <p className="text-sm text-emerald-400">
+            Falls ein Konto für diese E-Mail-Adresse existiert, wurde ein Passwort-Link versendet.
+          </p>
+        )}
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || sent}
           className="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
         >
-          {loading ? "Anmelden..." : "Anmelden"}
+          {loading ? "Wird gesendet..." : "Passwort-Link senden"}
         </button>
 
         <Link
-          href="/forgot-password"
+          href="/login"
           className="block text-center text-sm text-blue-400 hover:text-blue-300"
         >
-          Passwort vergessen?
+          Zurück zur Anmeldung
         </Link>
       </form>
     </main>

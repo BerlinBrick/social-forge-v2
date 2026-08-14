@@ -38,6 +38,25 @@ export default function PostsPage() {
     loadPosts();
   }, []);
 
+  async function publishToInstagram(postId: string) {
+    try {
+      const response = await fetch(`/api/posts/${postId}/instagram/publish`, {
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error ?? "Instagram-Veröffentlichung fehlgeschlagen.");
+        return;
+      }
+
+      alert("Beitrag wurde auf Instagram veröffentlicht.");
+    } catch (error) {
+      console.error(error);
+      alert("Instagram-Veröffentlichung fehlgeschlagen.");
+    }
+  }
+
   return (
     <AppShell>
       <div className="space-y-8">
@@ -146,6 +165,17 @@ export default function PostsPage() {
                     className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
                   >
                     Bearbeiten
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      publishToInstagram(post.id);
+                    }}
+                    className="rounded-xl bg-pink-600 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
+                  >
+                    Auf Instagram veröffentlichen
                   </button>
 
                 </div>
