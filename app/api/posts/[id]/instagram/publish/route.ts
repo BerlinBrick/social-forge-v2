@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { publishInstagramImage } from "@/lib/social/instagram";
-import { decryptSecret } from "@/lib/social/secrets";
+import { publishInstagramPost, safePublishErrorMessage } from "@/lib/social/publish-instagram-post";
 
 export const runtime = "nodejs";
-
-function safeErrorMessage(error: unknown) {
-  const message = error instanceof Error ? error.message : "Instagram publishing failed.";
-
-  return message
-    .replace(/(access_token|refresh_token|client_secret|code)=([^\s&]+)/gi, "$1=[redacted]")
-    .replace(/authorization:\s*bearer\s+[^\s]+/gi, "authorization: Bearer [redacted]");
-}
 
 export async function POST(
   _request: Request,
@@ -25,81 +16,24 @@ export async function POST(
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
 
     const admin = createAdminClient();
     const { data: post, error: postError } = await admin
       .from("posts")
-      .select("id, project, content, hashtags, image_url")
+      .select("project")
       .eq("id", id)
       .single();
+    if (postError || !post) return NextResponse.json({ error: "Beitrag nicht gefunden." }, { status: 404 });
 
-    if (postError || !post) {
-      return NextResponse.json({ error: "Beitrag nicht gefunden." }, { status: 404 });
-    }
+    const { data: project } = await supabase.from("projects").select("id").eq("name", post.project).single();
+    if (!project) return NextResponse.json({ error: "Kein Zugriff auf das Projekt dieses Beitrags." }, { status: 403 });
 
-    if (!post.image_url) {
-      return NextResponse.json({ error: "Für Instagram wird ein Bild benötigt." }, { status: 400 });
-    }
-
-    const { data: project } = await supabase
-      .from("projects")
-      .select("id")
-      .eq("name", post.project)
-      .single();
-
-    if (!project) {
-      return NextResponse.json({ error: "Kein Zugriff auf das Projekt dieses Beitrags." }, { status: 403 });
-    }
-
-    const { data: account } = await admin
-      .from("social_accounts")
-      .select("id, provider_account_id, status")
-      .eq("project_id", project.id)
-      .eq("platform", "instagram")
-      .eq("status", "connected")
-      .maybeSingle();
-
-    if (!account) {
-      return NextResponse.json({ error: "Für dieses Projekt ist kein Instagram-Konto verbunden." }, { status: 400 });
-    }
-
-    const { data: token } = await admin
-      .from("social_account_tokens")
-      .select("access_token_ciphertext, access_token_iv, access_token_tag, expires_at")
-      .eq("social_account_id", account.id)
-      .single();
-
-    if (!token) {
-      return NextResponse.json({ error: "Instagram-Zugangsdaten fehlen. Bitte verbinde das Konto erneut." }, { status: 400 });
-    }
-
-    if (token.expires_at && new Date(token.expires_at) <= new Date()) {
-      return NextResponse.json({ error: "Instagram-Zugang ist abgelaufen. Bitte verbinde das Konto erneut." }, { status: 400 });
-    }
-
-    const accessToken = decryptSecret({
-      ciphertext: token.access_token_ciphertext,
-      iv: token.access_token_iv,
-      tag: token.access_token_tag,
-    });
-    const caption = [post.content, post.hashtags].filter(Boolean).join("\n\n");
-    const instagramPostId = await publishInstagramImage(
-      account.provider_account_id,
-      accessToken,
-      post.image_url,
-      caption
-    );
-
+    const instagramPostId = await publishInstagramPost(id);
     return NextResponse.json({ success: true, instagramPostId });
   } catch (error) {
-    const message = safeErrorMessage(error);
-    console.error("Instagram Veröffentlichung Fehler:", message);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    const message = safePublishErrorMessage(error);
+    console.error("Instagram publishing error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -13,6 +13,8 @@ type Post = {
   content: string;
   hashtags: string;
   image_url: string | null;
+  scheduled_at: string | null;
+  published_at: string | null;
 };
 
 export default function PostsPage() {

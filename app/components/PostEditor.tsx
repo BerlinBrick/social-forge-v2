@@ -12,9 +12,18 @@ type Props = {
     content: string;
     hashtags: string;
     image_url: string | null;
+    scheduled_at?: string | null;
+    published_at?: string | null;
   } | null;
   onClose: () => void;
 };
+
+function toLocalDateTimeInputValue(value?: string | null) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
 
 export default function PostEditor({ post, onClose }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -25,6 +34,7 @@ export default function PostEditor({ post, onClose }: Props) {
   const [status, setStatus] = useState(post?.status ?? "Entwurf");
   const [content, setContent] = useState(post?.content ?? "");
   const [hashtags, setHashtags] = useState(post?.hashtags ?? "");
+  const [scheduledAt, setScheduledAt] = useState(toLocalDateTimeInputValue(post?.scheduled_at));
 
   const [imagePreview, setImagePreview] = useState<string | null>(post?.image_url ?? null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -38,6 +48,7 @@ export default function PostEditor({ post, onClose }: Props) {
     setStatus(post?.status ?? "Entwurf");
     setContent(post?.content ?? "");
     setHashtags(post?.hashtags ?? "");
+    setScheduledAt(toLocalDateTimeInputValue(post?.scheduled_at));
     setImagePreview(post?.image_url ?? null);
     setImageFile(null);
   }, [post]);
@@ -61,6 +72,11 @@ export default function PostEditor({ post, onClose }: Props) {
   async function savePost() {
     try {
       setSaving(true);
+
+      if (status === "Geplant" && !scheduledAt) {
+        alert("Bitte wähle ein Datum und eine Uhrzeit.");
+        return;
+      }
 
       let imageUrl: string | null = post?.image_url ?? null;
 
@@ -99,6 +115,7 @@ export default function PostEditor({ post, onClose }: Props) {
           content,
           hashtags,
           image_url: imageUrl,
+          scheduled_at: status === "Geplant" ? new Date(scheduledAt).toISOString() : null,
         }),
       });
 
@@ -184,7 +201,17 @@ export default function PostEditor({ post, onClose }: Props) {
               <option>Geplant</option>
               <option>Veröffentlicht</option>
             </select>
-                        <textarea
+
+            {status === "Geplant" && (
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
+              />
+            )}
+
+            <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Beitrag"
